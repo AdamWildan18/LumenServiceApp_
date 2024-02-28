@@ -29,11 +29,22 @@ use App\Http\Controllers\PostController;
 // });
 
 //Post
-$router->get('/posts', 'PostsController@index');
-$router->post('/posts', 'PostsController@store');
-$router->get('/post/{id}', 'PostsController@show');
-$router->put('/post/{id}', 'PostsController@update');
-$router->delete('/post/{id}', 'PostsController@destroy');
+Route::group(['middleware' => ['auth']], function ($router) {
+    $router->get('/posts', 'PostsController@index');
+    $router->post('/posts', 'PostsController@store');
+    $router->get('/post/{id}', 'PostsController@show');
+    $router->put('/post/{id}', 'PostsController@update');
+    $router->delete('/post/{id}', 'PostsController@destroy');
+});
+
+//Barang
+Route::group(['middleware' => ['auth']], function ($router) {
+    $router->get('/barangs', 'BarangController@index');
+    $router->post('/barangs', 'BarangController@store');
+    $router->get('/barang/{id}', 'BarangController@show');
+    $router->put('/barang/{id}', 'BarangController@update');
+    $router->delete('/barang/{id}', 'BarangController@destroy');
+});
 
 //account
 $router->get('/accounts', 'AccountController@index');
@@ -41,6 +52,14 @@ $router->post('/accounts', 'AccountController@store');
 $router->get('/account/{id}', 'AccountController@show');
 $router->put('/account/{id}', 'AccountController@update');
 $router->delete('/account/{id}', 'AccountController@destroy');
+
+// Users
+$router->group(['prefix' => 'auth'], function () use ($router){
+    $router->post('/register', 'AuthController@register');
+    $router->post('/login', 'AuthController@login');
+
+});
+
 
 
 

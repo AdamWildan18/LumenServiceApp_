@@ -1,22 +1,35 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Post;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PostsController extends Controller
 {
     public function index()
     {
-        $posts = Post::OrderBy("id", "DESC")->paginate(10);
-
-        $outPut = [
-            "message" => "posts",
-            "results" => $posts
-
+        $posts = Post::where(['user_id' => Auth::user()->id])->orderBy("id", "DESC")->paginate(2)->toArray();
+        $response = [
+            "total_count" => $posts["total"],
+            "limit" => $posts["per_page"],
+            "pagination" => [
+                "next_page" => $posts["next_page_url"],
+                "current_page" => $posts["current_page"]
+            ],
+            "data" => $posts["data"]
         ];
 
-        return response()->json($posts, 200);
+        return response()->json($response, 200);
+
+        // $outPut = [
+        //     "message" => "posts",
+        //     "results" => $posts
+
+        // ];
+
+        // return response()->json($posts, 200);
     }
 
     public function store(Request $request)
