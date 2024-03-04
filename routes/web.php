@@ -1,6 +1,8 @@
 <?php
 
-use App\Http\Controllers\PostController;
+// use App\Http\Controllers\PostsController;
+
+
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
@@ -15,27 +17,20 @@ use App\Http\Controllers\PostController;
 |
 */
 
-// $router->get('/', function(){
-//     return "<h1>PHP Service App</h1><p>Running</p>";
-// });
-
-// $router->group(['middleware' => 'auth.basic.json'], function () use ($router) {
-//     $router->get('/users', 'UsersController@index');
-//     $router->get('/users/{userId}', 'UsersController@show');
-//     $router->post('/post-user', 'UsersController@store');
-//     $router->put('/put-user/{userId}/', 'UsersController@update');
-//     $router->patch('/patch-user/{userId}/{resource}', 'UsersController@patch');
-//     $router->delete('/delete-user/{userId}', 'UsersController@delete');
-// });
-
 //Post
-Route::group(['middleware' => ['auth']], function ($router) {
+$router->group(['middleware' => ['auth']], function ($router) {
+
     $router->get('/posts', 'PostsController@index');
     $router->post('/posts', 'PostsController@store');
     $router->get('/post/{id}', 'PostsController@show');
     $router->put('/post/{id}', 'PostsController@update');
     $router->delete('/post/{id}', 'PostsController@destroy');
+
 });
+
+$router->get('/public/posts', 'Public\PostsController@index');
+
+$router->get('/public/post/{id}', 'Public\PostsController@show');
 
 //Barang
 Route::group(['middleware' => ['auth']], function ($router) {
