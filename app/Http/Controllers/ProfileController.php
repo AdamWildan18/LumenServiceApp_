@@ -43,28 +43,47 @@ class ProfileController extends Controller
 
     public function store(Request $request)
 {
-    $input = [
-        'full_name' => $request->input('full_name'),
-        'address' => $request->input('address'),
-        'gender' => $request->input('gender'),
-        'phone' => $request->input('phone'),
-        'user_id' => Auth::user()->id
+    $input = $request->all();
+
+    $validationRules = [
+        'first_name' => 'required|min:2',
+        'last_name' => 'required|min:2',
+        'summary' => 'required|min:10'
     ];
 
-    if (Gate::denies('store-profile')) {
-        return response()->json([
-            'success' => false,
-            'status' => 403,
-            'message' => 'You are unauthorized to perform this action'
-        ], 403);
+    $validator = Validator::make($input, $validationRules);
+
+    if ($validator->fails()) {
+        return response()->json($validator->errors(), 400);
     }
 
-    $profile = Profile::create($input);
+    $profile = Profile::where('user_id', Auth::user()->id)->first();
 
+    if (!$profile) {
+        $profile = new Profile;
+        $profile->user_id = Auth::user()->id;
+    }
 
-    $user = User::find(Auth::user()->id);
+    $profile->first_name = $request->input('first_name');
+    $profile->last_name = $request->input('last_name');
+    $profile->summary = $request->input('summary');
 
-    $user->profile()->attach($profile->id);
+    if ($request->hasFile('omage')) {
+        $firstName = str_replace(' ', '_', $request->input('first_name'));
+        $lastName = str_replace(' ', '_', $request->input('last_name'));
+
+        $imageName = Auth::user()->id . '_' . $firstName . '_' . $lastName;
+        $request->file('image')->move(storage_path('uploads/iamge_profile'), $imageName);
+
+        $current_image_path = storage_path('avatar') . '/' . $profile->image;
+        if (file_exists($current_image_path)) {
+            unlink($current_image_path);
+        }
+
+        $profile->image = $imageName;
+    }
+
+    $profile->save();
 
     return response()->json($profile, 200);
 }
