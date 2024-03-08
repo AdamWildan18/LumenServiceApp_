@@ -25,6 +25,8 @@ $router->group(['middleware' => ['auth']], function ($router) {
     $router->get('/post/{id}', 'PostsController@show');
     $router->put('/post/{id}', 'PostsController@update');
     $router->delete('/post/{id}', 'PostsController@destroy');
+    $router->get('/post/image/{imageName}', 'PostsController@image');
+    $router->get('/post/video/{videoName}', 'PostsController@video');
 
     $router->get('/categories', 'CategoryController@index');
     $router->post('/categories', 'CategoryController@store');
@@ -32,8 +34,10 @@ $router->group(['middleware' => ['auth']], function ($router) {
     $router->put('/category/{id}', 'CategoryController@update');
     $router->delete('/category/{id}', 'CategoryController@destroy');
 
-    $router->get('/profiles', 'ProfileController@index');
+    $router->get('/profile/{id}', 'ProfileController@show');
     $router->post('/profiles', 'ProfileController@store');
+    $router->get('/profile/image/{imageName}', 'ProfileController@image');
+
     $router->get('/profile/{id}', 'ProfileController@show');
     $router->put('/profile/{id}', 'ProfileController@update');
     $router->delete('/profile/{id}', 'ProfileController@destroy');
