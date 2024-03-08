@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Http\Controllers\Controller;
+
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Exceptions\JWTException;
 
 
@@ -29,7 +30,7 @@ class AuthController extends Controller
             'password' => 'required|confirmed',
         ];
 
-        $validator = \Validator::make($input, $validationRules);
+        $validator = Validator::make($input, $validationRules);
 
         if($validator->fails()){
             return response()->json($validator->erros(), 400);
@@ -38,6 +39,7 @@ class AuthController extends Controller
         $user = new User;
         $user->name = $request->input('name');
         $user->email = $request->input('email');
+        $user->role = $request->input('role');
         $plainPassword = $request->input('password');
         $user->password = app('hash')->make($plainPassword);
         $user->save();
@@ -54,7 +56,7 @@ class AuthController extends Controller
             'password' => 'required|string',
         ];
 
-        $validator = \Validator::make($input, $validationRules);
+        $validator = Validator::make($input, $validationRules);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);

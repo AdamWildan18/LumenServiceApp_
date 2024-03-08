@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Models\User;
+use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 
-class PostsController extends Controller
+class ProfileController extends Controller
 {
     public function index()
     {
@@ -21,69 +23,66 @@ class PostsController extends Controller
         }
 
         if (Auth::user()->role === 'admin') {
-            $posts = Post::OrderBy("id", "DESC")->paginate(2)->toArray();
+            $profiles = Profile::OrderBy("id", "DESC")->paginate(2)->toArray();
         } else {
-            $posts = Post::where(['user_id' => Auth::user()->id])->OrderBy("id", "DESC")->paginate(2)->toArray();
+            $profiles = Profile::where(['user_id' => Auth::user()->id])->OrderBy("id", "DESC")->paginate(2)->toArray();
         }
 
         $response = [
-            "total_count" => $posts["total"],
-            "limit" => $posts["per_page"],
+            "total_count" => $profiles["total"],
+            "limit" => $profiles["per_page"],
             "pagination" => [
-                "next_page" => $posts["next_page_url"],
-                "current_page" => $posts["current_page"]
+                "next_page" => $profiles["next_page_url"],
+                "current_page" => $profiles["current_page"]
             ],
-            "data" => $posts["data"]
+            "data" => $profiles["data"]
         ];
 
         return response()->json($response, 200);
     }
 
     public function store(Request $request)
-    {
-        $input = [
-            'title' => $request->input('title'),
-            'content' => $request->input('content'),
-            'status' => $request->input('status'),
-            'user_id' => Auth::user()->id
-        ];
+{
+    $input = [
+        'full_name' => $request->input('full_name'),
+        'address' => $request->input('address'),
+        'gender' => $request->input('gender'),
+        'phone' => $request->input('phone'),
+        'user_id' => Auth::user()->id
+    ];
 
-        if (Gate::denies('store-post')) {
-            return response()->json([
-                'success' => false,
-                'status' => 403,
-                'message' => 'You Are unauthorized'
-            ], 403);
-        }
-
-        $post = Post::create($input);
-
-
-
-        return response()->json($post, 200);
+    if (Gate::denies('store-profile')) {
+        return response()->json([
+            'success' => false,
+            'status' => 403,
+            'message' => 'You are unauthorized to perform this action'
+        ], 403);
     }
+
+    $profile = Profile::create($input);
+
+
+    $user = User::find(Auth::user()->id);
+
+    $user->profile()->attach($profile->id);
+
+    return response()->json($profile, 200);
+}
+
 
     public function show($id)
     {
-        $post = Post::find($id);
+        $profiles = Profile::find($id);
 
-        if (!$post) {
+        if (!$profiles) {
             abort(404);
         }
 
-        if (Gate::denies('read-post', $post)) {
-            return response()->json([
-                'success' => false,
-                'status' => 403,
-                'message' => 'You Are unauthorized'
-            ], 403);
-        }
-
         if (Auth::user()->role === 'admin') {
-            return response()->json($post, 200);
+            return response()->json($profiles, 200);
         }
 
-        if (Auth::user()->role === 'editor' && $post->user_id !== Auth::user()->id) {
+        if (Auth::user()->role === 'editor' && $profiles->user_id !== Auth::user()->id) {
             return response()->json([
                 'success' => false,
                 'status' => 403,
@@ -91,20 +90,20 @@ class PostsController extends Controller
             ], 403);
         }
 
-        return response()->json($post, 200);
+        return response()->json($profiles, 200);
     }
 
     public function update(Request $request, $id)
     {
         $input = $request->all();
 
-        $post = Post::find($id);
+        $profiles = Profile::find($id);
 
-        if (!$post) {
+        if (!$profiles) {
             abort(404);
         }
 
-        if (Gate::denies('update-post', $post)) {
+        if (Gate::denies('update-post', $profiles)) {
             return response()->json([
                 'success' => false,
                 'status' => 403,
@@ -124,22 +123,22 @@ class PostsController extends Controller
             return response()->json($validator->errors(), 400);
         }
 
-        $post->fill($input);
-        $post->save();
+        $profiles->fill($input);
+        $profiles->save();
 
-        return response()->json($post, 200);
+        return response()->json($profiles, 200);
 
     }
 
     public function destroy($id)
     {
-        $post = Post::find($id);
+        $profiles = Profile::find($id);
 
-        if (!$post) {
+        if (!$profiles) {
             abort(404);
         }
 
-        if (Gate::denies('update-post', $post)) {
+        if (Gate::denies('update-post', $profiles)) {
             return response()->json([
                 'success' => false,
                 'status' => 403,
@@ -147,7 +146,7 @@ class PostsController extends Controller
             ], 403);
         }
 
-        $post->delete();
+        $profiles->delete();
         $message = ['message' => 'deleted successfully', 'post_id' => $id];
         return response()->json($message, 200);
     }

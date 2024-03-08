@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 
-class PostsController extends Controller
+class CategoryController extends Controller
 {
     public function index()
     {
@@ -21,19 +22,19 @@ class PostsController extends Controller
         }
 
         if (Auth::user()->role === 'admin') {
-            $posts = Post::OrderBy("id", "DESC")->paginate(2)->toArray();
+            $categories = Category::OrderBy("id", "DESC")->paginate(2)->toArray();
         } else {
-            $posts = Post::where(['user_id' => Auth::user()->id])->OrderBy("id", "DESC")->paginate(2)->toArray();
+            $categories = Category::where(['user_id' => Auth::user()->id])->OrderBy("id", "DESC")->paginate(2)->toArray();
         }
 
         $response = [
-            "total_count" => $posts["total"],
-            "limit" => $posts["per_page"],
+            "total_count" => $categories["total"],
+            "limit" => $categories["per_page"],
             "pagination" => [
-                "next_page" => $posts["next_page_url"],
-                "current_page" => $posts["current_page"]
+                "next_page" => $categories["next_page_url"],
+                "current_page" => $categories["current_page"]
             ],
-            "data" => $posts["data"]
+            "data" => $categories["data"]
         ];
 
         return response()->json($response, 200);
@@ -42,9 +43,8 @@ class PostsController extends Controller
     public function store(Request $request)
     {
         $input = [
-            'title' => $request->input('title'),
-            'content' => $request->input('content'),
-            'status' => $request->input('status'),
+            'categories' => $request->input('categories'),
+            'post_id' => $request->input('post_id'),
             'user_id' => Auth::user()->id
         ];
 
@@ -56,22 +56,26 @@ class PostsController extends Controller
             ], 403);
         }
 
-        $post = Post::create($input);
+        $categories = Category::create($input);
 
+        $newCategoryId = $categories->id;
 
+        $post = Post::find($request->input('post_id'));
 
-        return response()->json($post, 200);
+        $post->categories()->attach($newCategoryId);
+
+        return response()->json($categories, 200);
     }
 
     public function show($id)
     {
-        $post = Post::find($id);
+        $categories = Category::find($id);
 
-        if (!$post) {
+        if (!$categories) {
             abort(404);
         }
 
-        if (Gate::denies('read-post', $post)) {
+        if (Gate::denies('read-post', $categories)) {
             return response()->json([
                 'success' => false,
                 'status' => 403,
@@ -80,10 +84,10 @@ class PostsController extends Controller
         }
 
         if (Auth::user()->role === 'admin') {
-            return response()->json($post, 200);
+            return response()->json($categories, 200);
         }
 
-        if (Auth::user()->role === 'editor' && $post->user_id !== Auth::user()->id) {
+        if (Auth::user()->role === 'editor' && $categories->user_id !== Auth::user()->id) {
             return response()->json([
                 'success' => false,
                 'status' => 403,
@@ -91,20 +95,20 @@ class PostsController extends Controller
             ], 403);
         }
 
-        return response()->json($post, 200);
+        return response()->json($categories, 200);
     }
 
     public function update(Request $request, $id)
     {
         $input = $request->all();
 
-        $post = Post::find($id);
+        $categories = Category::find($id);
 
-        if (!$post) {
+        if (!$categories) {
             abort(404);
         }
 
-        if (Gate::denies('update-post', $post)) {
+        if (Gate::denies('update-post', $categories)) {
             return response()->json([
                 'success' => false,
                 'status' => 403,
@@ -124,22 +128,22 @@ class PostsController extends Controller
             return response()->json($validator->errors(), 400);
         }
 
-        $post->fill($input);
-        $post->save();
+        $categories->fill($input);
+        $categories->save();
 
-        return response()->json($post, 200);
+        return response()->json($categories, 200);
 
     }
 
     public function destroy($id)
     {
-        $post = Post::find($id);
+        $categories = Category::find($id);
 
-        if (!$post) {
+        if (!$categories) {
             abort(404);
         }
 
-        if (Gate::denies('update-post', $post)) {
+        if (Gate::denies('update-post', $categories)) {
             return response()->json([
                 'success' => false,
                 'status' => 403,
@@ -147,7 +151,7 @@ class PostsController extends Controller
             ], 403);
         }
 
-        $post->delete();
+        $categories->delete();
         $message = ['message' => 'deleted successfully', 'post_id' => $id];
         return response()->json($message, 200);
     }

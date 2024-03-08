@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\Public;
-
-use App\Http\Controllers\Controller;
+namespace App\Http\Controllers\PublicController;
 
 use App\Models\Post;
+
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Models\Comment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
@@ -13,7 +14,7 @@ class PostsController extends Controller
 {
     public function index()
     {
-        $posts = Post::OrderBy("id", "DESC")->paginate(2)->toArray();
+        $posts = Post::with('user')->OrderBy("id", "DESC")->paginate(10)->toArray();
 
         $response = [
             "total_count" => $posts["total"],
@@ -30,13 +31,18 @@ class PostsController extends Controller
 
     public function show($id)
     {
-        $post = Post::find($id);
+        $post = Post::with(['user' => function($query){
+            $query->select('id', 'name');
+        }])->find($id);
 
         if (!$post) {
             abort(404);
         }
+
         return response()->json($post, 200);
     }
+
+
 
 }
 
